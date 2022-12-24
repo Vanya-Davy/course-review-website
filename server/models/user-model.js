@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 
 const userSchema = new mongoose.Schema({
   username: {
+    type: String,
     required: true,
     minLength: 3,
     maxLength: 10
@@ -24,25 +25,23 @@ const userSchema = new mongoose.Schema({
   }
 })
 
-// userSchema.method=function(){}
-
 userSchema.pre('save', async function (next) {
-  if(this.isModified('password') || this.isNew){
-    const hash = await bcrypt.hash(this.password,10),
-    this.password=hash,
+  if (this.isModified('password') || this.isNew) {
+    const hash = await bcrypt.hash(this.password, 10)
+    this.password = hash
     next()
-  }else{
+  } else {
     return next()
   }
 })
 
-userSchema.methods.comparePassword=function(password,callback){
-  bcrypt.compare(password,this.password,(err,isMatch)=>{
-    if(err){
-      return callback(err,isMatch)
+userSchema.methods.comparePassword = function (password, callback) {
+  bcrypt.compare(password, this.password, (err, isMatch) => {
+    if (err) {
+      return callback(err, isMatch)
     }
-    callback(null,isMatch)
+    callback(null, isMatch)
   })
 }
 
-module.exports=mongoose.model('User',userSchema)
+module.exports = mongoose.model('User', userSchema)
