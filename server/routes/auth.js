@@ -20,53 +20,52 @@ router.get('/testAPI', (req, res) => {
 
 router.post('/register', async (req, res) => {
   const { error } = registerValidation(req.body)
-  if (error) console.log(error)
-  // return res.status(400).send(error.details[0].message)
+  if (error) return res.status(400).send(error.details[0].message)
 
-  const emailExist = await User.findOne({ email: req.body.email })
+  const { email, username, password } = req.body
+
+  const emailExist = await User.findOne({ email })
   if (emailExist) {
     return res.status(400).send('Email has already been registered.')
   }
 
-  const newUser = new User({
-    email: req.body.email,
-    username: req.body.username,
-    password: req.body.password
-  })
   try {
+    const newUser = new User({
+      email,
+      username,
+      password
+    })
     const savedUser = await newUser.save()
     res.status(200).send({
       msg: 'success',
       savedObject: savedUser
     })
-  } catch (err) {
+  } catch (error) {
     res.status(400).send('User not saved.')
   }
 })
 
 router.post('/login', async (req, res) => {
   const { error } = loginValidation(req.body)
-  if (error) res.status(400).send(error.datails[0].message)
+  if (error) res.status(400).send(error.details[0].message)
 
-  const userFindone = await User.findOne({ email: req.body.email })
-
-  try {
-    if (!userFindone) {
-      res.status(401).send('User not found.')
-    } else {
-      userFindone.comparePassword(req.body.password, function (err, isMatch) {
-        if (err) return res.status(400).send(err)
-        if (isMatch) {
-          const tokenObject = { _id: User._id, email: User.email }
-          const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET)
-          res.send({ success: true, token: 'JWT' + token, User })
-        } else {
-          res.status(401).send('Wrong password.')
-        }
-      })
-    }
-  } catch (err) {
-    res.status(400).send(err)
+  const foundUser = await User.findOne({ email: req.body.email })
+  if (!foundUser) {
+    res.status(401).send('User not found.')
+  } else {
+    foundUser.comparePassword(req.body.password, function (err, isMatch) {
+      if (err) {
+        console.log(typeof err)
+        return res.status(400).send(err)
+      }
+      if (isMatch) {
+        const tokenObject = { _id: User._id, email: User.email }
+        const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET)
+        res.send({ success: true, token: 'JWT' + token, User })
+      } else {
+        res.status(401).send('Wrong password.')
+      }
+    })
   }
 })
 
