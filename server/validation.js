@@ -18,5 +18,29 @@ const loginValidation = (data) => {
   return schema.validate(data)
 }
 
+const topicValidation = (data) => {
+  const schema = joi.object({
+    topic: joi.string().min(3).max(50).require()
+  })
+  return schema.validate(data)
+}
+
+const chapterValidation = (data) => {
+  const schema = joi.object({
+    chapter: joi.string().min(3).max(50).require()
+  })
+  return schema.validate(data)
+}
+
+const problemValidation = (data) => {
+  const schema = joi.object({
+    description: joi.string().require()
+  })
+  return schema.validate(data)
+}
+
 module.exports.registerValidation = registerValidation
 module.exports.loginValidation = loginValidation
+module.exports.problemValidation = problemValidation
+module.exports.chapterValidation = chapterValidation
+module.exports.topicValidation = topicValidation
