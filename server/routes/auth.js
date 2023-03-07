@@ -6,10 +6,10 @@ const jwt = require('jsonwebtoken')
 const passport = require('passport')
 require('../config/passport')(passport)
 
-router.use((req, res, next) => {
-  console.log('A request is coming in to auth.js')
-  next()
-})
+// router.use((req, res, next) => {
+//   console.log('正在接收一個跟auth有關的請求')
+//   next()
+// })
 
 router.get('/testAPI', (req, res) => {
   const msgObj = {
@@ -20,18 +20,18 @@ router.get('/testAPI', (req, res) => {
 
 router.post('/register', async (req, res) => {
   const { error } = registerValidation(req.body)
-  if (error) console.log(error)
-  // return res.status(400).send(error.details[0].message)
+  if (error) return res.status(400).send(error.details[0].message)
 
   const emailExist = await User.findOne({ email: req.body.email })
   if (emailExist) {
     return res.status(400).send('Email has already been registered.')
   }
 
+  const { email, username, password } = req.body
   const newUser = new User({
-    email: req.body.email,
-    username: req.body.username,
-    password: req.body.password
+    email,
+    username,
+    password
   })
   try {
     const savedUser = await newUser.save()
@@ -39,34 +39,32 @@ router.post('/register', async (req, res) => {
       msg: 'success',
       savedObject: savedUser
     })
-  } catch (err) {
+  } catch (error) {
     res.status(400).send('User not saved.')
   }
 })
 
 router.post('/login', async (req, res) => {
   const { error } = loginValidation(req.body)
-  if (error) res.status(400).send(error.datails[0].message)
+  if (error) return res.status(400).send(error.details[0].message)
 
-  const userFindone = await User.findOne({ email: req.body.email })
-
-  try {
-    if (!userFindone) {
-      res.status(401).send('User not found.')
-    } else {
-      userFindone.comparePassword(req.body.password, function (err, isMatch) {
-        if (err) return res.status(400).send(err)
-        if (isMatch) {
-          const tokenObject = { _id: User._id, email: User.email }
-          const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET)
-          res.send({ success: true, token: 'JWT' + token, User })
-        } else {
-          res.status(401).send('Wrong password.')
-        }
-      })
-    }
-  } catch (err) {
-    res.status(400).send(err)
+  const foundUser = await User.findOne({ email: req.body.email })
+  if (!foundUser) {
+    return res.status(401).send('User not found.')
+  } else {
+    foundUser.comparePassword(req.body.password, function (err, isMatch) {
+      if (err) {
+        console.log(typeof err)
+        return res.status(400).send(err)
+      }
+      if (isMatch) {
+        const tokenObject = { _id: foundUser._id, email: foundUser.email }
+        const token = jwt.sign(tokenObject, process.env.PASSPORT_SECRET)
+        return res.send({ success: true, token })
+      } else {
+        return res.status(401).send('Wrong password.')
+      }
+    })
   }
 })
 
