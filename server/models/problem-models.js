@@ -2,8 +2,14 @@ const mongoose = require('mongoose')
 // const { Schema } = mongoose
 
 const topicSchema = new mongoose.Schema({
-  topic: String,
-  user: String
+  topic: {
+    type: String,
+    required: true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 const chapterSchema = new mongoose.Schema({

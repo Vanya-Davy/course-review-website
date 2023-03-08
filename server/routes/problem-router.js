@@ -4,12 +4,21 @@ const topicValidation = require('../validation').topicValidation
 const chapterValidation = require('../validation').chapterValidation
 const problemValidation = require('../validation').problemValidation
 
+const validateTopicId = async (req, res, next) => {
+  const { topicId } = req.params
+  const exists = await Topic.findOne({ _id: topicId, user: req.user._id })
+  if (exists) {
+    next()
+  } else {
+    return res.status(400).send({ error_message: 'Invalid topicId' })
+  }
+}
+
 router.get('/topic', async (req, res) => {
   try {
-    const topicFound = await Topic.find({})
+    const topics = await Topic.find({ user: req.user._id })
       .populate('user', ['username', 'email'])
-      .exec()
-    return res.send(topicFound)
+    return res.send({ data: topics })
   } catch (e) {
     return res.status(500).send(e.message)
   }
@@ -18,9 +27,8 @@ router.get('/topic', async (req, res) => {
 router.get('/topic/:_id', async (req, res) => {
   const { _id } = req.params
   try {
-    const topicFound = await Topic.findOne({ _id })
+    const topicFound = await Topic.findOne({ _id, user: req.user._id })
       .populate('user', ['username', 'email'])
-      .exec()
     return res.send(topicFound)
   } catch (e) {
     return res.status(500).send(e.message)
@@ -32,7 +40,7 @@ router.post('/topic', async (req, res) => {
   if (error) return res.status(400).send(error.details[0].message)
 
   const { topic } = req.body
-  const topicExist = await Topic.findOne({ topic })
+  const topicExist = await Topic.findOne({ topic, user: req.user._id })
   if (topicExist) {
     return res.status(400).send('該主題已經存在...')
   }
@@ -44,8 +52,8 @@ router.post('/topic', async (req, res) => {
     })
     const savedTopic = await newTopic.save()
     return res.status(200).send({
-      mssage: '新主題已被儲存',
-      savedTopic
+      message: '新主題已被儲存',
+      data: savedTopic
     })
   } catch (e) {
     return res.status(500).send(e.message)
@@ -58,11 +66,11 @@ router.patch('/topic/:_id', async (req, res) => {
 
   const { _id } = req.params
   try {
-    const topicFound = await Topic.findOne({ _id })
+    const topicFound = await Topic.findOne({ _id, user: req.user._id })
     if (!topicFound) {
       return res.status(400).send('找不到主題，無法更新...')
     } else {
-      const updateTopic = await Topic.findOneAndUpdate({ _id }, req.body, {
+      const updateTopic = await Topic.findOneAndUpdate({ _id, user: req.user._id }, req.body, {
         new: true,
         runValidators: true
       })
@@ -76,11 +84,11 @@ router.patch('/topic/:_id', async (req, res) => {
 router.delete('/topic/:_id', async (req, res) => {
   const { _id } = req.params
   try {
-    const topicFound = await Topic.findOne({ _id }).exec()
+    const topicFound = await Topic.findOne({ _id, user: req.user._id })
     if (!topicFound) {
       return res.status(400).send('找不到主題，無法刪除...')
     } else {
-      await Topic.deleteOne({ _id }).exec()
+      await Topic.deleteOne({ _id })
       return res.status(200).send('topic已被刪除')
     }
   } catch (e) {
@@ -88,73 +96,45 @@ router.delete('/topic/:_id', async (req, res) => {
   }
 })
 
-router.get('/topic/:_id/chapter', async (req, res, next) => {
+router.get('/topic/:topicId/chapter', validateTopicId, async (req, res) => {
+  const { topicId } = req.params
+
+  try {
+    const chapters = await Chapter.find({ topicId })
+      .populate('topicId', ['topic'])
+    return res.send({ data: chapters })
+  } catch (e) {
+    return res.status(500).send(e.message)
+  }
+})
+
+router.get('/topic/:topicId/chapter/:chapterId', validateTopicId, async (req, res) => {
   const { topicId, chapterId } = req.params
 
-  const topicExist = await Topic.findOne({ topicId })
-  const chapterExist = await Chapter.findOne({ chapterId })
-  if (topicExist) {
-    if (!chapterExist) {
-      return res.send('找不到題目所選章節')
-    }
-  }
-
-  const savedTopic = await topicExist.save()
   try {
-    const chapterFound = await Chapter.find({ chapterId })
-      .populate('chapter', ['TopicId', 'chapter'])
-      .exec()
-    return res.send({ savedTopic, chapterFound })
+    const chapterFound = await Chapter.findOne({ topicId, _id: chapterId })
+      .populate('topicId', ['topic'])
+    return res.send({ data: chapterFound })
   } catch (e) {
     return res.status(500).send(e.message)
   }
 })
 
-router.get('/topic/:_id/chapter/:_id', async (req, res) => {
-  const { topicId, chapterId, _id } = req.params
-  const topicExist = await Topic.findOne({ topicId })
-  const chapterExist = await Chapter.findOne({ chapterId })
-  if (topicExist) {
-    if (!chapterExist) {
-      return res.send('找不到該章節')
-    }
-  }
-
-  const savedTopic = await topicExist.save()
-  try {
-    const chapterFound = await Chapter.findOne({ _id })
-      .populate('chapter', ['TopicId', 'chapter'])
-      .exec()
-    return res.send({ savedTopic, chapterFound })
-  } catch (e) {
-    return res.status(500).send(e.message)
-  }
-})
-
-router.post('/topic/:_id/chapter', async (req, res) => {
+router.post('/topic/:topicId/chapter', validateTopicId, async (req, res) => {
   const { error } = chapterValidation(req.body)
   if (error) return res.status(400).send(error.details[0].message)
 
-  const { topicId, chapter } = req.body
-  const topicExist = await Topic.findOne({ topicId })
-  if (topicExist) {
-    const chapterExist = await Chapter.findOne({ chapter })
-    if (chapterExist) {
-      return res.send('此主題中的章節已經存在...')
-    }
-  }
-
-  const savedTopic = await topicExist.save()
+  const { topicId } = req.params
+  const { chapter } = req.body
 
   try {
     const newChapter = new Chapter({
-      savedTopic,
       chapter,
-      user: req.user._id
+      topicId
     })
     const savedChapter = await newChapter.save()
     return res.status(200).send({
-      mssage: '新章節已被儲存',
+      message: '新章節已被儲存',
       savedChapter
     })
   } catch (e) {
@@ -162,49 +142,41 @@ router.post('/topic/:_id/chapter', async (req, res) => {
   }
 })
 
-router.patch('/topic/:_id/chapter/:_id', async (req, res) => {
+router.patch('/topic/:topicId/chapter/:chapterId', validateTopicId, async (req, res) => {
   const { error } = chapterValidation(req.body)
   if (error) return res.status(400).send(error.details[0].message)
 
-  const { topicId, chapterId, _id } = req.params
+  const { chapterId } = req.params
   try {
-    const topicExist = await Topic.findOne({ topicId })
-    if (!topicExist) {
-      return res.status(400).send('找不到主題，無法更新...')
-    } else {
-      const chapterExist = await Chapter.findOne({ chapterId })
-      if (chapterExist) {
-        const updateChapter = await Chapter.findOneAndUpdate(
-          { _id },
-          req.body,
-          {
-            new: true,
-            runValidators: true
-          }
-        )
-        return res.status(200).send({ topicExist, updateChapter })
-      }
+    const chapterExist = await Chapter.findOne({ chapterId })
+    if (chapterExist) {
+      const updateChapter = await Chapter.findOneAndUpdate(
+        { _id: chapterId },
+        req.body,
+        {
+          new: true,
+          runValidators: true
+        }
+      )
+      return res.status(200).send({ data: updateChapter })
     }
   } catch (e) {
     return res.status(500).send(e)
   }
 })
 
-router.delete('/topic/:_id/chapter/:_id', async (req, res) => {
-  const { topicId, chapterId, _id } = req.params
+router.delete('/topic/:topicId/chapter/:chapterId', validateTopicId, async (req, res) => {
+  const { chapterId } = req.params
 
   try {
-    const topicExist = await Topic.findOne({ topicId })
-    if (topicExist) {
-      const chapterFound = await Chapter.findOne({ chapterId }).exec()
-      if (!chapterFound) {
-        return res.status(400).send('找不到主題，無法刪除...')
-      }
-      await Chapter.deleteOne({ _id }).exec()
-      return res
-        .status(200)
-        .send({ message: 'topic中的chapter已被刪除', topicExist })
+    const chapterFound = await Chapter.findOne({ _id: chapterId })
+    if (!chapterFound) {
+      return res.status(400).send('找不到主題，無法刪除...')
     }
+    await Chapter.deleteOne({ _id: chapterId })
+    return res
+      .status(200)
+      .send({ message: 'chapter已被刪除' })
   } catch (e) {
     return res.status(500).send(e.message)
   }
@@ -267,7 +239,6 @@ router.get('/topic/:_id/chapter/:_id/problem', async (req, res) => {
   try {
     const problemFound = await Problem.find({ problemId })
       .populate('problem', ['TopicId', 'chapterId', 'problem'])
-      .exec()
     return res.send({ savedTopic, savedChapter, problemFound })
   } catch (e) {
     return res.status(500).send(e.message)
@@ -294,7 +265,6 @@ router.get('/topic/:_id/chapter/:_id/problem/:_id', async (req, res) => {
   try {
     const problemFoundOne = await Problem.findOne({ _id })
       .populate('problem', ['TopicId', 'chapterId', 'problem'])
-      .exec()
     return res.send({ savedTopic, savedChapter, problemFoundOne })
   } catch (e) {
     return res.status(500).send(e.message)
@@ -313,7 +283,7 @@ router.delete('/topic/:_id/chapter/:_id/problem/:_id', async (req, res) => {
         if (!problemExist) {
           return res.send('找不到題目，無法刪除...')
         }
-        await Problem.deleteOne({ _id }).exec()
+        await Problem.deleteOne({ _id })
         return res
           .status(200)
           .send({ message: '題目已被刪除' }, topicExist, chapterExist)

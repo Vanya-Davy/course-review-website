@@ -26,7 +26,7 @@ const topicValidation = (data) => {
 
 const chapterValidation = (data) => {
   const schema = joi.object({
-    topic: joi.string().min(3).max(50).required(),
+    // topic: joi.string().min(3).max(50).required(),
     chapter: joi.string().min(3).max(50).required()
   })
   return schema.validate(data)
