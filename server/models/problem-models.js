@@ -1,9 +1,14 @@
 const mongoose = require('mongoose')
-// const { Schema } = mongoose
 
 const topicSchema = new mongoose.Schema({
-  topic: String,
-  user: String
+  topic: {
+    type: String,
+    required: true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 const chapterSchema = new mongoose.Schema({
@@ -29,7 +34,11 @@ const problemSchema = new mongoose.Schema({
   problem: {
     type: String
   },
-  questionType: { type: String, enum: ['單選', '多選', '填充'] }
+  questionType: { type: String, enum: ['單選', '多選', '填充'] },
+  answer: {
+    type: String
+  },
+  answerType: { type: String, enum: ['單選', '多選', '填充'] }
 })
 
 const Topic = mongoose.model('Topic', topicSchema)

@@ -26,7 +26,7 @@ const topicValidation = (data) => {
 
 const chapterValidation = (data) => {
   const schema = joi.object({
-    topic: joi.string().min(3).max(50).required(),
+    // topic: joi.string().min(3).max(50).required(),
     chapter: joi.string().min(3).max(50).required()
   })
   return schema.validate(data)
@@ -37,20 +37,21 @@ const problemValidation = (data) => {
     topic: joi.string().min(3).max(50).required(),
     chapter: joi.string().min(3).max(50).required(),
     problem: joi.string().required(),
-    questionType: joi.string().required().valid('單選', '多選', '填充')
+    questionType: joi.string().required().valid('單選', '多選', '填充'),
+    answer: joi.string().required(),
+    answerType: joi.string().required().valid('單選', '多選', '填充')
   })
   return schema.validate(data)
 }
 
 const answerValidation = (data) => {
-  const ary = ['單選', '多選', '填充']
   const schema = joi.object({
+    topic: joi.string().min(3).max(50).required(),
+    chapter: joi.string().min(3).max(50).required(),
+    problem: joi.string().required(),
+    questionType: joi.string().required().valid('單選', '多選', '填充'),
     answer: joi.string().required(),
-    enum: joi.alternatives().conditional('description', {
-      is: joi.string().valid(...ary),
-      then: joi.string().required(),
-      otherwise: joi.forbidden()
-    })
+    answerType: joi.string().required().valid('單選', '多選', '填充')
   })
   return schema.validate(data)
 }
