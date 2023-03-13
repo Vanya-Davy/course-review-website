@@ -38,20 +38,7 @@ const problemValidation = (data) => {
     chapter: joi.string().min(3).max(50).required(),
     problem: joi.string().required(),
     questionType: joi.string().required().valid('單選', '多選', '填充'),
-    answer: joi.string().required(),
-    answerType: joi.string().required().valid('單選', '多選', '填充')
-  })
-  return schema.validate(data)
-}
-
-const answerValidation = (data) => {
-  const schema = joi.object({
-    topic: joi.string().min(3).max(50).required(),
-    chapter: joi.string().min(3).max(50).required(),
-    problem: joi.string().required(),
-    questionType: joi.string().required().valid('單選', '多選', '填充'),
-    answer: joi.string().required(),
-    answerType: joi.string().required().valid('單選', '多選', '填充')
+    answer: joi.string().required()
   })
   return schema.validate(data)
 }
@@ -61,4 +48,3 @@ module.exports.loginValidation = loginValidation
 module.exports.problemValidation = problemValidation
 module.exports.chapterValidation = chapterValidation
 module.exports.topicValidation = topicValidation
-module.exports.answerValidation = answerValidation

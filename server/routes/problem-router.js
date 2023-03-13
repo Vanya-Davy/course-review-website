@@ -223,7 +223,7 @@ router.post(
     if (error) return res.status(400).send(error.details[0].message)
 
     const { topicId, chapterId } = req.params
-    const { problem, answer, answerType, questionType } = req.body
+    const { problem, answer, questionType } = req.body
 
     try {
       const newProblem = new Problem({
@@ -231,8 +231,7 @@ router.post(
         questionType,
         chapterId,
         topicId,
-        answer,
-        answerType
+        answer
       })
       const savedProblem = await newProblem.save()
       return res.status(200).send({

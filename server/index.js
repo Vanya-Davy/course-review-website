@@ -6,7 +6,6 @@ dotenv.config()
 const cors = require('cors')
 const authRoute = require('./routes/auth')
 const problemRouter = require('./routes/problem-router')
-const answerRouter = require('./routes/answer-router')
 const passport = require('passport')
 require('./config/passport')(passport)
 
@@ -27,7 +26,6 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use('/api/user', authRoute)
 app.use('/api', passport.authenticate('jwt', { session: false }), problemRouter)
-app.use('/api', passport.authenticate('jwt', { session: false }), answerRouter)
 
 app.get('/hello', (req, res) => res.send('Hello!'))
 
