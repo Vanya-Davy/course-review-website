@@ -26,7 +26,6 @@ const topicValidation = (data) => {
 
 const chapterValidation = (data) => {
   const schema = joi.object({
-    // topic: joi.string().min(3).max(50).required(),
     chapter: joi.string().min(3).max(50).required()
   })
   return schema.validate(data)
@@ -34,8 +33,6 @@ const chapterValidation = (data) => {
 
 const problemValidation = (data) => {
   const schema = joi.object({
-    topic: joi.string().min(3).max(50).required(),
-    chapter: joi.string().min(3).max(50).required(),
     problem: joi.string().required(),
     questionType: joi.string().required().valid('單選', '多選', '填充'),
     answer: joi.string().required()
