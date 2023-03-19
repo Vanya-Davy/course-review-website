@@ -27,7 +27,7 @@ const problemSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Topic'
   },
-  chapter: {
+  chapterId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Chapter'
   },
