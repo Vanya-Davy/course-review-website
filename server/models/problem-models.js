@@ -28,8 +28,8 @@ const problemSchema = new mongoose.Schema({
     ref: 'Topic'
   },
   chapter: {
-    type: String,
-    required: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Chapter'
   },
   problem: {
     type: String
