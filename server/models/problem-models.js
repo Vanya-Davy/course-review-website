@@ -23,6 +23,14 @@ const chapterSchema = new mongoose.Schema({
 })
 
 const problemSchema = new mongoose.Schema({
+  topicId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Topic'
+  },
+  chapterId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Chapter'
+  },
   problem: {
     type: String
   },
